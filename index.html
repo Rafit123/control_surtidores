@@ -5,15 +5,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Gestión de Surtidores y Ventas</title>
   <link rel="stylesheet" href="styles.css">
-  <!-- CDN CDN de Supabase -->
+  <!-- CDN de Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-  <div class="container">
-    <h1>⛽ Control de Surtidores</h1>
+  <!-- Vista 1: Formulario de Login -->
+  <div id="loginSection" class="container">
+    <div class="card login-card">
+      <h1>🔐 Iniciar Sesión</h1>
+      <p style="text-align: center; color: #64748b;">Control de Surtidores</p>
+      
+      <form id="formLogin">
+        <div class="form-group">
+          <label for="loginUser">Usuario:</label>
+          <input type="text" id="loginUser" placeholder="Ej. docente" required>
+        </div>
 
-    <!-- Sección Dictado por Voz (Web Speech API) -->
+        <div class="form-group">
+          <label for="loginPass">Contraseña:</label>
+          <input type="password" id="loginPass" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" class="btn">Ingresar</button>
+      </form>
+      <p id="loginError" class="error-msg" style="display: none;">Usuario o contraseña incorrectos</p>
+    </div>
+  </div>
+
+  <!-- Vista 2: Panel Principal (Oculto hasta iniciar sesión) -->
+  <div id="appSection" class="container" style="display: none;">
+    <div class="header-bar">
+      <h1>⛽ Control de Surtidores</h1>
+      <button id="btnLogout" class="btn-logout">Cerrar Sesión</button>
+    </div>
+
+    <!-- Dictado por Voz (Web Speech API) -->
     <section class="card voice-card">
       <h2>🎙️ Dictado por Voz (Web Speech API)</h2>
       <p>Haz clic en el botón y di algo como: <i>"Registrar venta en surtidor 1"</i></p>

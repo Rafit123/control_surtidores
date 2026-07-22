@@ -39,3 +39,7 @@ El modelo relacional incluye las siguientes tablas principales:
    git clone [https://github.com/Rafit123/control_surtidores.git](https://github.com/Rafit123/control_surtidores.git)
    ```
 2. Abre `index.html` directamente en tu navegador o mediante la extensión **Live Server** de VS Code.
+## 🔑 Credenciales de Acceso (Demostración)
+
+- **Usuario:** `docente`
+- **Contraseña:** `123456`

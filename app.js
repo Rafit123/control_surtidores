@@ -1,16 +1,59 @@
-// 1. Configuración de Supabase (Conexión configurada)
+// 1. Configuración de Supabase
 const SUPABASE_URL = 'https://xleuiecmipaujgsjzmio.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_orLMmUKXkITbz0HQgt0CyQ_sr2Djuc0';
 const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 // DOM Elements
+const loginSection = document.getElementById('loginSection');
+const appSection = document.getElementById('appSection');
+const formLogin = document.getElementById('formLogin');
+const loginError = document.getElementById('loginError');
+const btnLogout = document.getElementById('btnLogout');
+
 const selectSurtidor = document.getElementById('selectSurtidor');
 const formVenta = document.getElementById('formVenta');
 const tablaVentas = document.getElementById('tablaVentas').querySelector('tbody');
 const btnVoice = document.getElementById('btnVoice');
 const voiceOutput = document.getElementById('voiceOutput');
 
-// 2. Cargar Surtidores al inicio
+// --- LÓGICA DE INICIO DE SESIÓN ---
+
+formLogin.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  loginError.style.display = 'none';
+
+  const userVal = document.getElementById('loginUser').value.trim();
+  const passVal = document.getElementById('loginPass').value.trim();
+
+  // Consulta a la tabla usuarios en Supabase
+  const { data, error } = await _supabase
+    .from('usuarios')
+    .select('*')
+    .eq('usuario', userVal)
+    .eq('password', passVal)
+    .single();
+
+  if (error || !data) {
+    loginError.style.display = 'block';
+  } else {
+    // Éxito: ocultar login y mostrar panel principal
+    loginSection.style.display = 'none';
+    appSection.style.display = 'block';
+
+    // Cargar datos
+    cargarSurtidores();
+    cargarVentas();
+  }
+});
+
+btnLogout.addEventListener('click', () => {
+  appSection.style.display = 'none';
+  loginSection.style.display = 'block';
+  formLogin.reset();
+});
+
+// --- LÓGICA DEL SISTEMA ---
+
 async function cargarSurtidores() {
   const { data, error } = await _supabase.from('surtidores').select('*');
   
@@ -30,7 +73,6 @@ async function cargarSurtidores() {
   });
 }
 
-// 3. Cargar y Mostrar Ventas
 async function cargarVentas() {
   const { data, error } = await _supabase
     .from('ventas')
@@ -54,7 +96,6 @@ async function cargarVentas() {
   });
 }
 
-// 4. Guardar Venta
 formVenta.addEventListener('submit', async (e) => {
   e.preventDefault();
   
@@ -84,7 +125,7 @@ formVenta.addEventListener('submit', async (e) => {
   }
 });
 
-// 5. Integración Web Speech API (Reconocimiento de voz)
+// Web Speech API
 const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
 
 if (SpeechRecognition) {
@@ -109,7 +150,3 @@ if (SpeechRecognition) {
   btnVoice.disabled = true;
   voiceOutput.textContent = 'Tu navegador no soporta la Web Speech API.';
 }
-
-// Inicializar
-cargarSurtidores();
-cargarVentas();
