@@ -9,13 +9,44 @@ const appSection = document.getElementById('appSection');
 const formLogin = document.getElementById('formLogin');
 const loginError = document.getElementById('loginError');
 const btnLogout = document.getElementById('btnLogout');
+const btnLoginSubmit = document.getElementById('btnLoginSubmit');
 
 // DOM Elements - Aplicación
 const selectSurtidor = document.getElementById('selectSurtidor');
 const formVenta = document.getElementById('formVenta');
+const btnSubmitVenta = document.getElementById('btnSubmitVenta');
 const tablaVentas = document.getElementById('tablaVentas').querySelector('tbody');
 const btnVoice = document.getElementById('btnVoice');
 const voiceOutput = document.getElementById('voiceOutput');
+const statusToast = document.getElementById('statusToast');
+
+// ==========================================
+// PERSISTENCIA Y INICIALIZACIÓN
+// ==========================================
+
+document.addEventListener('DOMContentLoaded', () => {
+  const sesionGuardada = localStorage.getItem('usuario_sesion');
+  if (sesionGuardada) {
+    mostrarAplicacion();
+  }
+});
+
+function mostrarAplicacion() {
+  loginSection.style.display = 'none';
+  appSection.style.display = 'block';
+  cargarSurtidores();
+  cargarVentas();
+  iniciarSuscrpcionRealtime();
+}
+
+function mostrarToast(mensaje, esError = false) {
+  statusToast.textContent = mensaje;
+  statusToast.className = esError ? 'toast toast-error' : 'toast toast-success';
+  statusToast.style.display = 'block';
+  setTimeout(() => {
+    statusToast.style.display = 'none';
+  }, 4000);
+}
 
 // ==========================================
 // 2. LÓGICA DE INICIO DE SESIÓN (LOGIN)
@@ -24,12 +55,13 @@ const voiceOutput = document.getElementById('voiceOutput');
 formLogin.addEventListener('submit', async (e) => {
   e.preventDefault();
   loginError.style.display = 'none';
+  btnLoginSubmit.disabled = true;
+  btnLoginSubmit.textContent = 'Verificando...';
 
   const userVal = document.getElementById('loginUser').value.trim();
   const passVal = document.getElementById('loginPass').value.trim();
 
   try {
-    // Consulta a la tabla usuarios
     const { data, error } = await _supabase
       .from('usuarios')
       .select('*')
@@ -43,15 +75,10 @@ formLogin.addEventListener('submit', async (e) => {
       return;
     }
 
-    // Verificar si encontró coincidencia
     if (data && data.length > 0) {
-      // Ocultar pantalla de login y mostrar panel
-      loginSection.style.display = 'none';
-      appSection.style.display = 'block';
-
-      // Cargar datos del sistema
-      cargarSurtidores();
-      cargarVentas();
+      localStorage.setItem('usuario_sesion', JSON.stringify(data[0]));
+      mostrarAplicacion();
+      formLogin.reset();
     } else {
       loginError.textContent = 'Usuario o contraseña incorrectos';
       loginError.style.display = 'block';
@@ -60,11 +87,15 @@ formLogin.addEventListener('submit', async (e) => {
     console.error('Excepción en login:', err);
     loginError.textContent = 'Ocurrió un error inesperado.';
     loginError.style.display = 'block';
+  } finally {
+    btnLoginSubmit.disabled = false;
+    btnLoginSubmit.textContent = 'Ingresar';
   }
 });
 
 // Cerrar Sesión
 btnLogout.addEventListener('click', () => {
+  localStorage.removeItem('usuario_sesion');
   appSection.style.display = 'none';
   loginSection.style.display = 'block';
   formLogin.reset();
@@ -87,6 +118,7 @@ async function cargarSurtidores() {
   data.forEach(s => {
     const opt = document.createElement('option');
     opt.value = s.id;
+    opt.dataset.numero = s.numero;
     opt.dataset.combustible = s.combustible;
     opt.textContent = `Surtidor #${s.numero} (${s.combustible})`;
     selectSurtidor.appendChild(opt);
@@ -117,7 +149,7 @@ async function cargarVentas() {
       <td>#${v.surtidores ? v.surtidores.numero : v.surtidor_id}</td>
       <td>${v.combustible}</td>
       <td>${v.litros} L</td>
-      <td><b>Bs. ${v.total}</b></td>
+      <td><b>Bs. ${parseFloat(v.total).toFixed(2)}</b></td>
     `;
     tablaVentas.appendChild(row);
   });
@@ -130,6 +162,9 @@ async function cargarVentas() {
 formVenta.addEventListener('submit', async (e) => {
   e.preventDefault();
   
+  btnSubmitVenta.disabled = true;
+  btnSubmitVenta.textContent = 'Guardando...';
+
   const surtidorId = selectSurtidor.value;
   const selectedOpt = selectSurtidor.options[selectSurtidor.selectedIndex];
   const combustible = selectedOpt.dataset.combustible;
@@ -148,12 +183,15 @@ formVenta.addEventListener('submit', async (e) => {
   ]);
 
   if (error) {
-    alert('Error al registrar venta: ' + error.message);
+    mostrarToast('Error al registrar venta: ' + error.message, true);
   } else {
-    alert('Venta registrada con éxito');
+    mostrarToast('✅ Venta registrada con éxito');
     formVenta.reset();
     cargarVentas();
   }
+
+  btnSubmitVenta.disabled = false;
+  btnSubmitVenta.textContent = 'Guardar Venta';
 });
 
 // ==========================================
@@ -173,8 +211,9 @@ if (SpeechRecognition) {
   });
 
   recognition.onresult = (event) => {
-    const transcript = event.results[0][0].transcript;
+    const transcript = event.results[0][0].transcript.toLowerCase();
     voiceOutput.textContent = `Escuchado: "${transcript}"`;
+    procesarComandoVoz(transcript);
   };
 
   recognition.onerror = (event) => {
@@ -183,4 +222,39 @@ if (SpeechRecognition) {
 } else {
   btnVoice.disabled = true;
   voiceOutput.textContent = 'Tu navegador no soporta la Web Speech API.';
+}
+
+function procesarComandoVoz(texto) {
+  const numeros = texto.match(/\d+(?:[\.,]\d+)?/g);
+  
+  if (numeros && numeros.length >= 1) {
+    document.getElementById('litros').value = parseFloat(numeros[0].replace(',', '.'));
+  }
+  if (numeros && numeros.length >= 2) {
+    document.getElementById('precio').value = parseFloat(numeros[1].replace(',', '.'));
+  }
+
+  const matchSurtidor = texto.match(/surtidor\s*(\d+)/i);
+  if (matchSurtidor) {
+    const numSurtidor = matchSurtidor[1];
+    const options = Array.from(selectSurtidor.options);
+    const optMatch = options.find(opt => opt.dataset.numero === numSurtidor);
+    if (optMatch) {
+      selectSurtidor.value = optMatch.value;
+    }
+  }
+}
+
+// ==========================================
+// 7. REALTIME DE ALERTAS
+// ==========================================
+
+function iniciarSuscrpcionRealtime() {
+  _supabase
+    .channel('alertas_realtime')
+    .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'alertas' }, payload => {
+      const nuevaAlerta = payload.new;
+      mostrarToast(`⚠️ ALERTA EN VIVO: Surtidor ${nuevaAlerta.surtidor_id} - ${nuevaAlerta.tipo}`, true);
+    })
+    .subscribe();
 }

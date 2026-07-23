@@ -4,6 +4,8 @@
   --card-bg: #ffffff;
   --text: #1e293b;
   --border: #e2e8f0;
+  --success: #10b981;
+  --danger: #ef4444;
 }
 
 body {
@@ -22,6 +24,7 @@ body {
 h1 {
   text-align: center;
   color: var(--primary);
+  margin-top: 0;
 }
 
 .card {
@@ -66,8 +69,13 @@ input, select {
   opacity: 0.9;
 }
 
+.btn:disabled {
+  background: #94a3b8;
+  cursor: not-allowed;
+}
+
 .btn-voice {
-  background: #10b981;
+  background: var(--success);
 }
 
 .voice-output {
@@ -91,7 +99,7 @@ th, td {
 th {
   background: #f1f5f9;
 }
-/* Login y Encabezado */
+
 .login-card {
   max-width: 400px;
   margin: 50px auto;
@@ -105,7 +113,7 @@ th {
 }
 
 .btn-logout {
-  background: #ef4444;
+  background: var(--danger);
   color: white;
   border: none;
   padding: 8px 14px;
@@ -119,8 +127,34 @@ th {
 }
 
 .error-msg {
-  color: #ef4444;
+  color: var(--danger);
   text-align: center;
   margin-top: 15px;
   font-size: 0.9em;
+}
+
+.toast {
+  padding: 12px 20px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-weight: 600;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.toast-success {
+  background-color: #d1fae5;
+  color: #065f46;
+  border: 1px solid #a7f3d0;
+}
+
+.toast-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  border: 1px solid #fca5a5;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }
