@@ -3,99 +3,146 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gestión de Surtidores y Ventas</title>
-  <link rel="stylesheet" href="styles.css">
-  <!-- CDN de Supabase -->
+  <title>Control de Surtidores y Ventas</title>
+
+  <!-- Iconos de Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- CDN de Supabase JS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- Hoja de Estilos -->
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-  <div class="container">
-    
-    <!-- Sección de Login -->
-    <section id="loginSection" class="card login-card">
-      <h1>⛽ Control de Surtidores</h1>
-      <h2>Iniciar Sesión</h2>
-      <form id="formLogin">
-        <div class="form-group">
-          <label for="loginUser">Usuario:</label>
-          <input type="text" id="loginUser" required placeholder="Ej. docente">
+  <!-- NAVBAR / HEADER -->
+  <header class="navbar">
+    <div class="logo">
+      <i class="fas fa-gas-pump"></i>
+      <h1>Control de Surtidores y Ventas</h1>
+    </div>
+
+    <div class="voice-control">
+      <span class="voice-status" id="userStatus">Usuario: No autenticado</span>
+      <button class="btn-voice" id="authBtn" type="button" style="display: none;">
+        <i class="fas fa-user"></i> <span id="authBtnText">Cerrar Sesión</span>
+      </button>
+      <button class="btn-voice" id="btn-voice" type="button" style="display: none;">
+        <i class="fas fa-microphone"></i> Activar Voz
+      </button>
+    </div>
+  </header>
+
+  <!-- FORMULARIO DE INICIO DE SESIÓN OBLIGATORIO (MODAL/PANEL) -->
+  <div id="login-screen" class="login-container">
+    <div class="login-card">
+      <h2><i class="fas fa-lock"></i> Iniciar Sesión</h2>
+      <p>Debes autenticarte para acceder al sistema de surtidores.</p>
+      
+      <form id="login-form">
+        <div class="input-group" style="margin-bottom: 1rem;">
+          <label for="login-email">Correo Electrónico</label>
+          <input type="email" id="login-email" placeholder="docente@gmail.com" required>
         </div>
-        <div class="form-group">
-          <label for="loginPass">Contraseña:</label>
-          <input type="password" id="loginPass" required placeholder="••••••">
+        <div class="input-group" style="margin-bottom: 1.5rem;">
+          <label for="login-password">Contraseña</label>
+          <input type="password" id="login-password" placeholder="••••••••" required>
         </div>
-        <button type="submit" id="btnLoginSubmit" class="btn">Ingresar</button>
-        <p id="loginError" class="error-msg" style="display: none;"></p>
+        <button type="submit" class="btn-primary" style="width: 100%;">
+          <i class="fas fa-sign-in-alt"></i> Ingresar
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- CONTENEDOR PRINCIPAL (SE OCULTA HASTA QUE SE INICIE SESIÓN) -->
+  <main class="container" id="main-content" style="display: none;">
+
+    <!-- SECCIÓN DE TANQUES / SURTIDORES -->
+    <section>
+      <h2><i class="fas fa-tachometer-alt"></i> Estado de Surtidores y Tanques</h2>
+      <div class="cards-grid">
+
+        <div class="card-tank">
+          <h3>Tanque 1 - Gasolina Premium</h3>
+          <p class="nivel">Nivel actual: <strong>8,500 L</strong> / 10,000 L</p>
+          <div class="progress-bar">
+            <div class="fill" style="width: 85%;"></div>
+          </div>
+        </div>
+
+        <div class="card-tank">
+          <h3>Tanque 2 - Gasolina Especial</h3>
+          <p class="nivel">Nivel actual: <strong>3,200 L</strong> / 10,000 L</p>
+          <div class="progress-bar">
+            <div class="fill warning" style="width: 32%;"></div>
+          </div>
+        </div>
+
+        <div class="card-tank">
+          <h3>Tanque 3 - Diesel</h3>
+          <p class="nivel">Nivel actual: <strong>900 L</strong> / 10,000 L</p>
+          <div class="progress-bar">
+            <div class="fill danger" style="width: 9%;"></div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- FORMULARIO DE VENTAS -->
+    <section>
+      <h2><i class="fas fa-edit"></i> Registrar Venta</h2>
+      <form id="venta-form" class="venta-form">
+        <div class="input-group">
+          <label for="surtidor-select">Surtidor / Combustible</label>
+          <select id="surtidor-select" required>
+            <option value="">Cargando surtidores...</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label for="venta-litros">Litros</label>
+          <input type="number" id="venta-litros" step="0.01" min="0.1" placeholder="0.00" required>
+        </div>
+
+        <div class="input-group">
+          <label for="venta-monto">Monto Total ($ / BS)</label>
+          <input type="number" id="venta-monto" step="0.01" min="0.1" placeholder="0.00" required>
+        </div>
+
+        <button type="submit" class="btn-primary" id="btnGuardar">
+          <i class="fas fa-save"></i> Guardar Venta
+        </button>
       </form>
     </section>
 
-    <!-- Sección Principal (Oculta por defecto) -->
-    <section id="appSection" style="display: none;">
-      <div class="header-bar">
-        <h1>⛽ Control de Surtidores</h1>
-        <button id="btnLogout" class="btn-logout">Cerrar Sesión</button>
-      </div>
-
-      <!-- Banner para Notificaciones/Feedback -->
-      <div id="statusToast" class="toast" style="display: none;"></div>
-
-      <!-- Sección Dictado por Voz -->
-      <section class="card voice-card">
-        <h2>🎙️ Dictado por Voz (Web Speech API)</h2>
-        <p>Haz clic en el botón y di algo como: <i>"Registrar 20 litros a 3.74 en surtidor 1"</i></p>
-        <button id="btnVoice" class="btn btn-voice">Iniciar Dictado</button>
-        <p id="voiceOutput" class="voice-output">Esperando voz...</p>
-      </section>
-
-      <!-- Formulario Nueva Venta -->
-      <section class="card">
-        <h2>🛒 Registrar Venta</h2>
-        <form id="formVenta">
-          <div class="form-group">
-            <label for="selectSurtidor">Surtidor:</label>
-            <select id="selectSurtidor" required>
-              <option value="">Cargando surtidores...</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="litros">Litros:</label>
-            <input type="number" step="0.01" id="litros" placeholder="Ej. 20" required>
-          </div>
-
-          <div class="form-group">
-            <label for="precio">Precio por Litro (Bs.):</label>
-            <input type="number" step="0.01" id="precio" placeholder="Ej. 3.74" required>
-          </div>
-
-          <button type="submit" id="btnSubmitVenta" class="btn">Guardar Venta</button>
-        </form>
-      </section>
-
-      <!-- Registro de Ventas -->
-      <section class="card">
-        <h2>📊 Ventas Recientes</h2>
-        <table id="tablaVentas">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Fecha</th>
-              <th>Surtidor</th>
-              <th>Combustible</th>
-              <th>Litros</th>
-              <th>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            <!-- Se llena dinámicamente -->
-          </tbody>
-        </table>
-      </section>
+    <!-- TABLA DE HISTORIAL DE BD -->
+    <section>
+      <h2><i class="fas fa-history"></i> Historial de Ventas (Supabase)</h2>
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Surtidor</th>
+            <th>Litros</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody id="tablaHistorial">
+          <tr><td colspan="4" style="text-align:center;">Cargando datos...</td></tr>
+        </tbody>
+      </table>
     </section>
 
-  </div>
+  </main>
 
+  <footer>
+    <p>&copy; 2026 Sistema de Control de Surtidores y Ventas</p>
+  </footer>
+
+  <script src="decodificador.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

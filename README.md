@@ -41,5 +41,5 @@ El modelo relacional incluye las siguientes tablas principales:
 2. Abre `index.html` directamente en tu navegador o mediante la extensión **Live Server** de VS Code.
 ## 🔑 Credenciales de Acceso (Demostración)
 
-- **Usuario:** `docente`
+- **Email:** `docente@gmail.com`
 - **Contraseña:** `123456`
